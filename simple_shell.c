@@ -56,9 +56,21 @@ int main(void)
 			return (0);
 		}
 
-		if (line[read - 1] == '\n')
-			line[read - 1] = '\0';
+	if (line[read - 1] == '\n')
+	line[read - 1] = '\0';
 
-		execute_command(line);
+	while (*line == ' ')
+		line++;
+
+	read = 0;
+	while (line[read] != '\0')
+		read++;
+
+	while (read > 0 && line[read - 1] == ' ')
+	{
+	line[read - 1] = '\0';
+	read--;
+	}
+	execute_command(line);
 	}
 }
