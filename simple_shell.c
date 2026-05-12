@@ -7,10 +7,21 @@
 void execute_command(char *line)
 {
 	pid_t pid;
-	char *argv[2];
+	char *argv[10];
+	char *token;
+	int i;
 
-	argv[0] = line;
-	argv[1] = NULL;
+	token = strtok(line, " ");
+	i = 0;
+
+	while (token != NULL)
+	{
+		argv[i] = token;
+		token = strtok(NULL, " ");
+		i++;
+	}
+
+	argv[i] = NULL;
 
 	pid = fork();
 	if (pid == -1)
