@@ -32,6 +32,37 @@ void execute_command(char *line)
 }
 
 /**
+ * clean_line - removes new line and spaces
+ * @line: command line
+ * @read: number of characters read
+ *
+ * Return: clean command
+ */
+char *clean_line(char *line, ssize_t read)
+{
+	char *cmd;
+
+	if (line[read - 1] == '\n')
+		line[read - 1] = '\0';
+
+	cmd = line;
+	while (*cmd == ' ')
+		cmd++;
+
+	read = 0;
+	while (cmd[read] != '\0')
+		read++;
+
+	while (read > 0 && cmd[read - 1] == ' ')
+	{
+		cmd[read - 1] = '\0';
+		read--;
+	}
+
+	return (cmd);
+}
+
+/**
  * main - simple UNIX command line interpreter
  *
  * Return: 0 on success
@@ -39,6 +70,7 @@ void execute_command(char *line)
 int main(void)
 {
 	char *line = NULL;
+	char *cmd;
 	size_t len = 0;
 	ssize_t read;
 
@@ -56,21 +88,8 @@ int main(void)
 			return (0);
 		}
 
-	if (line[read - 1] == '\n')
-	line[read - 1] = '\0';
-
-	while (*line == ' ')
-		line++;
-
-	read = 0;
-	while (line[read] != '\0')
-		read++;
-
-	while (read > 0 && line[read - 1] == ' ')
-	{
-	line[read - 1] = '\0';
-	read--;
-	}
-	execute_command(line);
+		cmd = clean_line(line, read);
+		if (*cmd != '\0')
+			execute_command(cmd);
 	}
 }
