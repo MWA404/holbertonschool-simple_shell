@@ -9,6 +9,7 @@
 #include <string.h>
 
 extern char **environ;
+extern int g_status;
 char *get_path(void);
 char *find_path(char *cmd);
 void execute_command(char *line, char *argv0);

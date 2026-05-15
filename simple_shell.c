@@ -1,5 +1,7 @@
 #include "shell.h"
 
+int g_status = 0;
+
 /**
  * get_path - gets PATH value from environ
  * Return: PATH value or NULL
@@ -39,7 +41,7 @@ char *find_path(char *cmd)
 
 	/* get PATH from environment without getenv */
 	path = get_path();
-	if (path == NULL)
+	if (path == NULL || path[0] == '\0')
 		return (NULL);
 
 	/* make a copy because strtok modifies the string */
@@ -102,6 +104,7 @@ void execute_command(char *line, char *argv0)
 	{
 		/* don't fork if command not found */
 		fprintf(stderr, "%s: 1: %s: not found\n", argv0, argv[0]);
+		g_status = 127;
 		return;
 	}
 
@@ -161,7 +164,7 @@ char *clean_line(char *line, ssize_t read)
  * @argc: argument count
  * @argv: argument vector
  *
- * Return: 0 on success
+ * Return: last exit status
  */
 int main(int argc, char **argv)
 {
@@ -181,7 +184,7 @@ int main(int argc, char **argv)
 			free(line);
 			if (isatty(STDIN_FILENO))
 				write(STDOUT_FILENO, "\n", 1);
-			return (0);
+			return (g_status);
 		}
 		cmd = clean_line(line, read);
 		if (*cmd != '\0')
