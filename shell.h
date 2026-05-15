@@ -6,9 +6,11 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <string.h>
+#include <sys/stat.h>
 
 extern char **environ;
-void execute_command(char *line);
 char *clean_line(char *line, ssize_t read);
+void execute_command(char *line, char *argv0);
+char *find_path(char *cmd);
 #endif
 

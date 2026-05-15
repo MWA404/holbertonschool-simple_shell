@@ -1,45 +1,114 @@
 #include "shell.h"
 
 /**
+ * find_path - finds the full path of a command
+ * @cmd: the command to find
+ * Return: full path or NULL if not found
+ */
+char *find_path(char *cmd)
+{
+	char *path, *path_copy, *dir, *full_path;
+	struct stat st;
+	int len;
+
+	/* if cmd has / in it, use it directly */
+	if (cmd[0] == '/')
+	{
+		if (stat(cmd, &st) == 0)
+			return (cmd);
+		return (NULL);
+	}
+
+	/* get PATH from environment */
+	path = getenv("PATH");
+	if (path == NULL)
+		return (NULL);
+
+	/* make a copy because strtok modifies the string */
+	path_copy = strdup(path);
+	if (path_copy == NULL)
+		return (NULL);
+
+	/* search each directory in PATH */
+	dir = strtok(path_copy, ":");
+	while (dir != NULL)
+	{
+		/* build full path: dir + "/" + cmd */
+		len = strlen(dir) + strlen(cmd) + 2;
+		full_path = malloc(len);
+		if (full_path == NULL)
+		{
+			free(path_copy);
+			return (NULL);
+		}
+		sprintf(full_path, "%s/%s", dir, cmd);
+		if (stat(full_path, &st) == 0)
+		{
+			free(path_copy);
+			return (full_path);
+		}
+		free(full_path);
+		dir = strtok(NULL, ":");
+	}
+	free(path_copy);
+	return (NULL);
+}
+
+/**
  * execute_command - executes a command
  * @line: command line
+ * @argv0: name of the shell
  */
-void execute_command(char *line)
+void execute_command(char *line, char *argv0)
 {
 	pid_t pid;
 	char *argv[10];
 	char *token;
+	char *full_path;
 	int i;
 
+	/* split command into arguments */
 	token = strtok(line, " ");
 	i = 0;
-
 	while (token != NULL)
 	{
 		argv[i] = token;
 		token = strtok(NULL, " ");
 		i++;
 	}
-
 	argv[i] = NULL;
 
+	/* find the full path of the command */
+	full_path = find_path(argv[0]);
+	if (full_path == NULL)
+	{
+		/* don't fork if command not found */
+		fprintf(stderr, "%s: 1: %s: not found\n", argv0, argv[0]);
+		return;
+	}
+
+	/* fork and execute */
 	pid = fork();
 	if (pid == -1)
 	{
 		perror("fork");
+		if (full_path != argv[0])
+			free(full_path);
 		return;
 	}
-
 	if (pid == 0)
 	{
-		if (execve(argv[0], argv, environ) == -1)
+		if (execve(full_path, argv, environ) == -1)
 		{
 			perror(argv[0]);
+			if (full_path != argv[0])
+				free(full_path);
 			exit(1);
 		}
 	}
-
 	wait(NULL);
+	if (full_path != argv[0])
+		free(full_path);
 }
 
 /**
@@ -55,41 +124,39 @@ char *clean_line(char *line, ssize_t read)
 
 	if (line[read - 1] == '\n')
 		line[read - 1] = '\0';
-
 	cmd = line;
 	while (*cmd == ' ')
 		cmd++;
-
 	read = 0;
 	while (cmd[read] != '\0')
 		read++;
-
 	while (read > 0 && cmd[read - 1] == ' ')
 	{
 		cmd[read - 1] = '\0';
 		read--;
 	}
-
 	return (cmd);
 }
 
 /**
  * main - simple UNIX command line interpreter
+ * @argc: argument count
+ * @argv: argument vector
  *
  * Return: 0 on success
  */
-int main(void)
+int main(int argc, char **argv)
 {
 	char *line = NULL;
 	char *cmd;
 	size_t len = 0;
 	ssize_t read;
 
+	(void)argc;
 	while (1)
 	{
 		if (isatty(STDIN_FILENO))
 			write(STDOUT_FILENO, "$ ", 2);
-
 		read = getline(&line, &len, stdin);
 		if (read == -1)
 		{
@@ -98,9 +165,8 @@ int main(void)
 				write(STDOUT_FILENO, "\n", 1);
 			return (0);
 		}
-
 		cmd = clean_line(line, read);
 		if (*cmd != '\0')
-			execute_command(cmd);
+			execute_command(cmd, argv[0]);
 	}
 }
