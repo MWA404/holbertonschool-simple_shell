@@ -1,6 +1,24 @@
 #include "shell.h"
 
 /**
+ * get_path - gets PATH value from environ
+ * Return: PATH value or NULL
+ */
+char *get_path(void)
+{
+	int i;
+
+	for (i = 0; environ[i] != NULL; i++)
+	{
+		if (environ[i][0] == 'P' && environ[i][1] == 'A' &&
+			environ[i][2] == 'T' && environ[i][3] == 'H' &&
+			environ[i][4] == '=')
+			return (environ[i] + 5);
+	}
+	return (NULL);
+}
+
+/**
  * find_path - finds the full path of a command
  * @cmd: the command to find
  * Return: full path or NULL if not found
@@ -11,16 +29,16 @@ char *find_path(char *cmd)
 	struct stat st;
 	int len;
 
-	/* if cmd has / in it, use it directly */
-	if (cmd[0] == '/')
+	/* if cmd starts with . or / use it directly */
+	if (cmd[0] == '/' || cmd[0] == '.')
 	{
 		if (stat(cmd, &st) == 0)
 			return (cmd);
 		return (NULL);
 	}
 
-	/* get PATH from environment */
-	path = getenv("PATH");
+	/* get PATH from environment without getenv */
+	path = get_path();
 	if (path == NULL)
 		return (NULL);
 
