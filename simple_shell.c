@@ -1,6 +1,5 @@
 #include "shell.h"
 
-int g_status = 0;
 
 /**
  * get_path - gets PATH value from environ
@@ -29,7 +28,6 @@ char *find_path(char *cmd)
 {
 	char *path, *path_copy, *dir, *full_path;
 	struct stat st;
-	int len;
 
 	/* if cmd starts with . or / use it directly */
 	if (cmd[0] == '/' || cmd[0] == '.')
@@ -54,14 +52,12 @@ char *find_path(char *cmd)
 	while (dir != NULL)
 	{
 		/* build full path: dir + "/" + cmd */
-		len = strlen(dir) + strlen(cmd) + 2;
-		full_path = malloc(len);
+		full_path = build_path(dir, cmd);
 		if (full_path == NULL)
 		{
 			free(path_copy);
 			return (NULL);
 		}
-		sprintf(full_path, "%s/%s", dir, cmd);
 		if (stat(full_path, &st) == 0)
 		{
 			free(path_copy);
@@ -98,13 +94,14 @@ void execute_command(char *line, char *argv0)
 	}
 	argv[i] = NULL;
 
+	if (strcmp(argv[0], "exit") == 0)
+		exit(0);
 	/* find the full path of the command */
 	full_path = find_path(argv[0]);
 	if (full_path == NULL)
 	{
 		/* don't fork if command not found */
 		fprintf(stderr, "%s: 1: %s: not found\n", argv0, argv[0]);
-		g_status = 127;
 		return;
 	}
 
@@ -184,7 +181,7 @@ int main(int argc, char **argv)
 			free(line);
 			if (isatty(STDIN_FILENO))
 				write(STDOUT_FILENO, "\n", 1);
-			return (g_status);
+			return (0);
 		}
 		cmd = clean_line(line, read);
 		if (*cmd != '\0')
