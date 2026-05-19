@@ -75,13 +75,14 @@ char *find_path(char *cmd)
  * @line: command line
  * @argv0: name of the shell
  */
-void execute_command(char *line, char *argv0)
+int execute_command(char *line, char *argv0)
 {
 	pid_t pid;
 	char *argv[10];
 	char *token;
 	char *full_path;
 	int i;
+	int status;
 
 	/* split command into arguments */
 	token = strtok(line, " ");
@@ -100,7 +101,7 @@ void execute_command(char *line, char *argv0)
 	{
 		/* don't fork if command not found */
 		fprintf(stderr, "%s: 1: %s: not found\n", argv0, argv[0]);
-		return;
+		return (127);
 	}
 
 	/* fork and execute */
@@ -110,7 +111,7 @@ void execute_command(char *line, char *argv0)
 		perror("fork");
 		if (full_path != argv[0])
 			free(full_path);
-		return;
+		return (1);
 	}
 	if (pid == 0)
 	{
@@ -122,7 +123,10 @@ void execute_command(char *line, char *argv0)
 			exit(1);
 		}
 	}
-	wait(NULL);
+	wait(&status);
+	if (WIFEXITED(status))
+		return (WEXITSTATUS(status));
+	return (0);
 	if (full_path != argv[0])
 		free(full_path);
 }
@@ -167,6 +171,7 @@ int main(int argc, char **argv)
 	char *cmd;
 	size_t len = 0;
 	ssize_t read;
+	int status = 0;
 
 	(void)argc;
 	while (1)
@@ -185,9 +190,9 @@ int main(int argc, char **argv)
 		if (strcmp(cmd, "exit") == 0)
 		{
 			free(line);
-			return (0);
+			return (status);
 		}
 		if (*cmd != '\0')
-			execute_command(cmd, argv[0]);
+			status = execute_command(cmd, argv[0]);
 	}
 }
