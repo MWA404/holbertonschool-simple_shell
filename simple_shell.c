@@ -94,8 +94,6 @@ void execute_command(char *line, char *argv0)
 	}
 	argv[i] = NULL;
 
-	if (strcmp(argv[0], "exit") == 0)
-		exit(0);
 	/* find the full path of the command */
 	full_path = find_path(argv[0]);
 	if (full_path == NULL)
@@ -184,6 +182,11 @@ int main(int argc, char **argv)
 			return (0);
 		}
 		cmd = clean_line(line, read);
+		if (strcmp(cmd, "exit") == 0)
+		{
+			free(line);
+			return (0);
+		}
 		if (*cmd != '\0')
 			execute_command(cmd, argv[0]);
 	}
