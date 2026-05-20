@@ -74,6 +74,7 @@ char *find_path(char *cmd)
  * execute_command - executes a command
  * @line: command line
  * @argv0: name of the shell
+ * Return: exit status
  */
 int execute_command(char *line, char *argv0)
 {
@@ -94,6 +95,11 @@ int execute_command(char *line, char *argv0)
 		i++;
 	}
 	argv[i] = NULL;
+	if (strcmp(argv[0], "env") == 0)
+	{
+		print_env();
+		return (0);
+	}
 
 	/* find the full path of the command */
 	full_path = find_path(argv[0]);
@@ -157,7 +163,6 @@ char *clean_line(char *line, ssize_t read)
 	}
 	return (cmd);
 }
-
 /**
  * main - simple UNIX command line interpreter
  * @argc: argument count

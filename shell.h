@@ -15,4 +15,5 @@ char *find_path(char *cmd);
 int execute_command(char *line, char *argv0);
 char *clean_line(char *line, ssize_t read);
 char *build_path(char *dir, char *cmd);
+void print_env(void);
 #endif
